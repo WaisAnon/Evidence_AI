@@ -24,8 +24,7 @@ Question: ${question}`;
     const response = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":context.env.GEMINI_API_KEY},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:.2,maxOutputTokens:1200}})});
     const result=await response.json();
     if(!response.ok) return reply({error:"The AI service is unavailable. Check the Cloudflare logs and API key."},502);
-    const answer=result.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("
-").trim();
+    const answer=result.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("\n").trim();
     if(!answer) return reply({error:"No answer was generated."},502);
     return reply({answer});
   } catch (error) {
