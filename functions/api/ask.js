@@ -29,26 +29,28 @@ export async function onRequestPost(context) {
     const prompt = `
 You are Evidence AI, an evidence-based public-source research assistant.
 
-Separate confirmed facts, official allegations, credible reporting,
-reasonable inference, and speculation.
+Answer concisely in no more than 400 words.
 
+Clearly separate:
+- Confirmed facts
+- Official allegations
+- Credible reporting
+- Disputed or unverified claims
+
+Never present an unverified conspiracy claim as fact.
 Never treat a criminal charge as a conviction.
-Never present an unverified conspiracy claim as established fact.
-Do not provide stolen personal data, credentials, malware,
-or instructions for unauthorized access.
+Do not provide stolen personal data, passwords, credentials,
+malware, or instructions for unauthorized access.
 
-Keep the response concise and under 600 words.
+If live sources have not been provided, clearly state that this is a
+preliminary background assessment and may not include recent developments.
 
-If live source material has not been provided, clearly state that the
-answer is a preliminary background assessment and may not reflect
-recent developments.
-
-Use exactly these headings:
+Use these headings:
 
 Assessment
-What is confirmed
-What is alleged or disputed
-What remains unverified
+Confirmed facts
+Alleged or disputed
+Unverified
 Reliability
 Sources to check
 
@@ -57,13 +59,13 @@ ${question}
 `;
 
     const endpoint =
-      "https://generativelanguage.googleapis.com/v1beta/interactions";
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
 
     const controller = new AbortController();
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 55000);
+    }, 60000);
 
     let response;
 
@@ -73,15 +75,25 @@ ${question}
 
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": context.env.GEMINI_API_KEY,
-          "Api-Revision": "2026-05-20"
+          "x-goog-api-key": context.env.GEMINI_API_KEY
         },
 
         body: JSON.stringify({
-          model: "gemini-3.8-flash",
-          input: prompt,
-          generation_config: {
-            thinking_level: "low"
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: prompt
+                }
+              ]
+            }
+          ],
+
+          generationConfig: {
+            thinkingConfig: {
+              thinkingLevel: "low"
+            }
           }
         }),
 
@@ -92,7 +104,7 @@ ${question}
         return reply(
           {
             error:
-              "The AI took longer than 55 seconds. Please try again."
+              "Gemini did not respond within 60 seconds. Please try again."
           },
           504
         );
@@ -117,19 +129,21 @@ ${question}
       );
     }
 
-    const answer = (result.steps || [])
-      .filter((step) => step.type === "model_output")
-      .flatMap((step) => step.content || [])
-      .filter((item) => item.type === "text")
-      .map((item) => item.text || "")
-      .join("\n")
-      .trim();
+    const answer =
+      result.candidates?.[0]?.content?.parts
+        ?.filter((part) => !part.thought && part.text)
+        .map((part) => part.text)
+        .join("\n")
+        .trim();
 
     if (!answer) {
+      const finishReason =
+        result.candidates?.[0]?.finishReason || "unknown";
+
       return reply(
         {
           error:
-            "The AI completed the request but returned no readable answer."
+            `Gemini returned no readable answer. Finish reason: ${finishReason}.`
         },
         502
       );
