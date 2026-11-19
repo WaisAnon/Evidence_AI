@@ -69,4 +69,23 @@ async function runGeneralInvestigation() {
 async function runDOJInvestigation() {
   const question = input.value.trim();
 
-  if (!validateQuestion(
+  if (!validateQuestion(question)) {
+    return;
+  }
+
+  if (question.length > 100) {
+    message.textContent =
+      "DOJ searches are currently limited to 100 characters. Please shorten the question.";
+
+    return;
+  }
+
+  startLoading(
+    "Searching live Department of Justice records..."
+  );
+
+  try {
+    const endpoint =
+      `/api/ask-doj?q=${encodeURIComponent(question)}`;
+
+    const response = await fetch(
