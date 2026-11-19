@@ -79,9 +79,11 @@ ${question}
         });
       }
 
-      console.log(
-        `Groq failed: ${groqResult.status} ${groqResult.error}`
-      );
+groqFailure = groqResult;
+
+console.log(
+  `Groq failed: ${groqResult.status} ${groqResult.error}`
+);
     }
 
     /*
