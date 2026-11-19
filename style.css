@@ -1,4 +1,148 @@
-:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#071019;color:#edf7ff}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0,#17334a 0,transparent 38%),#071019}.wrap{width:min(920px,92%);margin:auto}.hero{padding:64px 0 28px}.eyebrow{letter-spacing:.18em;color:#5fe1ff;font-size:.78rem;font-weight:800}h1{font-size:clamp(2.7rem,8vw,5.5rem);line-height:.95;margin:.15em 0;color:#fff}.intro{max-width:720px;color:#b8c9d8;font-size:1.08rem;line-height:1.65}.panel{border:1px solid #294257;background:rgba(10,24,36,.9);border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.22)}label{display:block;font-weight:750;margin:16px 0 9px}textarea{width:100%;min-height:145px;resize:vertical;border:1px solid #3b586d;border-radius:12px;padding:15px;background:#06111b;color:#f3fbff;font:inherit;line-height:1.5}textarea:focus,button:focus{outline:3px solid rgba(95,225,255,.3);outline-offset:2px}.actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:10px;padding:12px 20px;background:#5fe1ff;color:#001019;font-weight:850;cursor:pointer}button:disabled{opacity:.55;cursor:wait}#message{color:#ffd37a}.answer{margin-top:22px;line-height:1.7;white-space:pre-wrap}.hidden{display:none}footer{padding:30px 0 48px;color:#8197a8;font-size:.9rem}@media(max-width:480px){.hero{padding-top:40px}.panel{padding:18px}}
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #071019;
+  color: #edf7ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at 20% 0,
+      #17334a 0,
+      transparent 38%
+    ),
+    #071019;
+}
+
+.wrap {
+  width: min(920px, 92%);
+  margin: auto;
+}
+
+.hero {
+  padding: 64px 0 28px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #5fe1ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 0.15em 0;
+  color: #ffffff;
+  font-size: clamp(2.7rem, 8vw, 5.5rem);
+  line-height: 0.95;
+}
+
+h2 {
+  color: #f5fbff;
+}
+
+.intro {
+  max-width: 720px;
+  color: #b8c9d8;
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.panel,
+.latest-section {
+  padding: 24px;
+  border: 1px solid #294257;
+  border-radius: 18px;
+
+  background: rgba(10, 24, 36, 0.9);
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+label {
+  display: block;
+  margin: 16px 0 9px;
+  font-weight: 750;
+}
+
+textarea {
+  width: 100%;
+  min-height: 145px;
+  padding: 15px;
+
+  border: 1px solid #3b586d;
+  border-radius: 12px;
+
+  background: #06111b;
+  color: #f3fbff;
+
+  font: inherit;
+  line-height: 1.5;
+
+  resize: vertical;
+}
+
+textarea:focus,
+button:focus,
+a:focus {
+  outline: 3px solid rgba(95, 225, 255, 0.3);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+
+  margin-top: 14px;
+}
+
+button {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 10px;
+
+  background: #5fe1ff;
+  color: #001019;
+
+  font: inherit;
+  font-weight: 850;
+
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.06);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .secondary-button {
   border: 1px solid #5fe1ff;
   background: transparent;
@@ -19,6 +163,17 @@
 #message {
   display: block;
   margin-top: 14px;
+  color: #ffd37a;
+  line-height: 1.5;
+}
+
+.answer {
+  margin-top: 22px;
+  line-height: 1.7;
+}
+
+#answer {
+  white-space: pre-wrap;
 }
 
 .answer-heading {
@@ -32,10 +187,13 @@
 .source-badge {
   display: inline-block;
   padding: 7px 10px;
+
   border: 1px solid #31586d;
   border-radius: 999px;
+
   background: #0b1e2b;
   color: #8eeaff;
+
   font-size: 0.78rem;
   font-weight: 750;
 }
@@ -57,15 +215,19 @@
 
 .source-card {
   padding: 15px;
+
   border: 1px solid #294257;
   border-radius: 12px;
+
   background: #081722;
 }
 
 .source-card a {
   display: block;
   margin-top: 7px;
+
   color: #78e7ff;
+
   font-weight: 750;
   line-height: 1.45;
 }
@@ -84,6 +246,149 @@
   text-transform: uppercase;
 }
 
+/*
+  Latest DOJ Updates
+*/
+
+.latest-section {
+  margin-top: 28px;
+  padding: 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.section-heading h2 {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.section-intro {
+  max-width: 620px;
+  margin: 0;
+  color: #9eb2c2;
+  line-height: 1.55;
+}
+
+.refresh-button {
+  margin: 0;
+
+  border: 1px solid #3b5f73;
+
+  background: #0c2230;
+  color: #8eeaff;
+}
+
+.refresh-button:hover {
+  background: #123247;
+}
+
+.updates-status {
+  min-height: 1.5em;
+  margin: 18px 0 0;
+
+  color: #91a8b9;
+  font-size: 0.9rem;
+}
+
+.updates-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  margin-top: 16px;
+}
+
+.update-card {
+  padding: 18px;
+
+  border: 1px solid #294257;
+  border-radius: 14px;
+
+  background: #081722;
+}
+
+.update-card:first-child {
+  grid-column: 1 / -1;
+}
+
+.update-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  color: #7fdff4;
+
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.update-card h3 {
+  margin: 12px 0 9px;
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.update-card h3 a {
+  color: #edf7ff;
+  text-decoration: none;
+}
+
+.update-card h3 a:hover {
+  color: #78e7ff;
+  text-decoration: underline;
+}
+
+.update-card p {
+  margin: 0;
+  color: #9aaebd;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.feed-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+
+  border-top: 1px solid #294257;
+
+  color: #7f94a4;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.hidden {
+  display: none;
+}
+
+footer {
+  padding: 30px 0 48px;
+  color: #8197a8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .updates-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .update-card:first-child {
+    grid-column: auto;
+  }
+
+  .refresh-button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 560px) {
   .actions {
     align-items: stretch;
@@ -92,8 +397,24 @@
   .actions button {
     width: 100%;
   }
+
+  .latest-section {
+    padding: 20px;
+  }
+
+  .update-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
 }
 
-/* Latest DOJ Updates */
-.latest-section{margin-top:28px;padding:26px;border:1px solid #294257;border-radius:18px;background:rgba(10,24,36,.9);box-shadow:0 20px 60px rgba(0,0,0,.18)}
-.section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}.section-heading h2{margin:.15rem 0 .35rem}.section-intro{margin:0;color:#9eb2c2;line-height:1.55}.refresh-button{margin:0;border:1px solid #3b5f73;background:#0c2230;color:#8eeaff}.refresh-button:hover{background:#123247}.updates-status{color:#91a8b9;font-size:.9rem}.updates-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.update-card{padding:18px;border:1px solid #294257;border-radius:14px;background:#081722}.update-card:first-child{grid-column:1/-1}.update-meta{display:flex;justify-content:space-between;gap:12px;color:#7fdff4;font-size:.76rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.update-card h3{margin:12px 0 9px;font-size:1.05rem;line-height:1.4}.update-card h3 a{color:#edf7ff;text-decoration:none}.update-card h3 a:hover{text-decoration:underline;color:#78e7ff}.update-card p{margin:0;color:#9aaebd;line-height:1.55;font-size:.92rem}.feed-note{margin:18px 0 0;padding-top:14px;border-top:1px solid #294257;color:#7f94a4;font-size:.82rem;line-height:1.5}@media(max-width:700px){.updates-grid{grid-template-columns:1fr}.update-card:first-child{grid-column:auto}.refresh-button{width:100%}}
+@media (max-width: 480px) {
+  .hero {
+    padding-top: 40px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+}
