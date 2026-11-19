@@ -418,3 +418,18 @@ footer {
     padding: 18px;
   }
 }
+.page-footer-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.page-footer-links a {
+  color: #78e7ff;
+  text-decoration: none;
+}
+
+.page-footer-links a:hover {
+  text-decoration: underline;
+}
