@@ -20,7 +20,7 @@ export async function onRequestPost(context) {
     if (!context.env.GEMINI_API_KEY) {
       return reply(
         {
-          error: "The AI key has not been configured yet."
+          error: "The AI key has not been configured."
         },
         500
       );
@@ -34,11 +34,13 @@ reasonable inference, and speculation.
 
 Never treat a criminal charge as a conviction.
 Never present an unverified conspiracy claim as established fact.
-Do not provide stolen personal data, passwords, credentials, malware,
+Do not provide stolen personal data, credentials, malware,
 or instructions for unauthorized access.
 
-If current source material has not been supplied, clearly state that
-the answer is a preliminary background assessment and may not reflect
+Keep the response concise and under 600 words.
+
+If live source material has not been provided, clearly state that the
+answer is a preliminary background assessment and may not reflect
 recent developments.
 
 Use exactly these headings:
@@ -55,38 +57,34 @@ ${question}
 `;
 
     const endpoint =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+      "https://generativelanguage.googleapis.com/v1beta/interactions";
 
     const controller = new AbortController();
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 30000);
+    }, 55000);
 
     let response;
 
     try {
       response = await fetch(endpoint, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": context.env.GEMINI_API_KEY
+          "x-goog-api-key": context.env.GEMINI_API_KEY,
+          "Api-Revision": "2026-05-20"
         },
+
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 700
+          model: "gemini-3.8-flash",
+          input: prompt,
+          generation_config: {
+            thinking_level: "low"
           }
         }),
+
         signal: controller.signal
       });
     } catch (error) {
@@ -94,7 +92,7 @@ ${question}
         return reply(
           {
             error:
-              "The AI took longer than 30 seconds. Please try again."
+              "The AI took longer than 55 seconds. Please try again."
           },
           504
         );
@@ -119,16 +117,19 @@ ${question}
       );
     }
 
-    const answer =
-      result.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text || "")
-        .join("\n")
-        .trim();
+    const answer = (result.steps || [])
+      .filter((step) => step.type === "model_output")
+      .flatMap((step) => step.content || [])
+      .filter((item) => item.type === "text")
+      .map((item) => item.text || "")
+      .join("\n")
+      .trim();
 
     if (!answer) {
       return reply(
         {
-          error: "No answer was generated."
+          error:
+            "The AI completed the request but returned no readable answer."
         },
         502
       );
