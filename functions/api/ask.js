@@ -10,17 +10,13 @@ export async function onRequestPost(context) {
     if (question.length < 10 || question.length > 1000) {
       return reply(
         {
-          error:
-            "Enter a valid question between 10 and 1,000 characters."
+          error: "Enter a valid question between 10 and 1,000 characters."
         },
         400
       );
     }
 
-    if (
-      !context.env.GROQ_API_KEY &&
-      !context.env.GEMINI_API_KEY
-    ) {
+    if (!context.env.GROQ_API_KEY && !context.env.GEMINI_API_KEY) {
       return reply(
         {
           error: "No AI provider has been configured."
@@ -30,6 +26,8 @@ export async function onRequestPost(context) {
     }
 
     let groqFailure = null;
+
+    const prompt = `
 You are Evidence AI, an evidence-based public-source research assistant.
 
 Answer concisely in no more than 400 words.
@@ -62,10 +60,6 @@ Question:
 ${question}
 `;
 
-    /*
-      PRIMARY PROVIDER: GROQ
-    */
-
     if (context.env.GROQ_API_KEY) {
       const groqResult = await askGroq(
         prompt,
@@ -79,16 +73,12 @@ ${question}
         });
       }
 
-groqFailure = groqResult;
+      groqFailure = groqResult;
 
-console.log(
-  `Groq failed: ${groqResult.status} ${groqResult.error}`
-);
+      console.log(
+        `Groq failed: ${groqResult.status} ${groqResult.error}`
+      );
     }
-
-    /*
-      BACKUP PROVIDER: GEMINI
-    */
 
     if (context.env.GEMINI_API_KEY) {
       const geminiResult = await askGemini(
@@ -108,21 +98,22 @@ console.log(
       );
 
       return reply(
-        return reply(
-  {
-    error:
-      `Groq error ${groqFailure?.status || "unknown"}: ` +
-      `${groqFailure?.error || "Unknown Groq error"}. ` +
-      `Gemini returned ${geminiResult.status}.`
-  },
-  503
-);
+        {
+          error:
+            `Groq error ${groqFailure?.status || "unknown"}: ` +
+            `${groqFailure?.error || "Unknown Groq error"}. ` +
+            `Gemini returned ${geminiResult.status}: ` +
+            `${geminiResult.error || "Unknown Gemini error"}.`
+        },
+        503
+      );
     }
 
     return reply(
       {
         error:
-          "The primary AI provider is temporarily unavailable."
+          `Groq error ${groqFailure?.status || "unknown"}: ` +
+          `${groqFailure?.error || "Unknown Groq error"}.`
       },
       503
     );
@@ -184,8 +175,7 @@ async function askGroq(prompt, apiKey) {
     return {
       success: false,
       status: result.response.status,
-      error:
-        data.error?.message || "Unknown Groq API error."
+      error: data.error?.message || "Unknown Groq API error."
     };
   }
 
@@ -255,8 +245,7 @@ async function askGemini(prompt, apiKey) {
     return {
       success: false,
       status: result.response.status,
-      error:
-        data.error?.message || "Unknown Gemini API error."
+      error: data.error?.message || "Unknown Gemini API error."
     };
   }
 
