@@ -433,3 +433,83 @@ footer {
 .page-footer-links a:hover {
   text-decoration: underline;
 }
+/*
+  Cookie notice
+*/
+
+.cookie-notice {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  z-index: 9999;
+
+  max-width: 900px;
+  margin: auto;
+  padding: 18px;
+
+  border: 1px solid #3e657a;
+  border-radius: 14px;
+
+  background: #081722;
+  color: #edf7ff;
+
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.48);
+}
+
+.cookie-notice-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.cookie-notice h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.cookie-notice p {
+  margin: 0;
+  max-width: 670px;
+
+  color: #b8c9d8;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.cookie-notice a {
+  color: #78e7ff;
+  font-weight: 700;
+}
+
+.cookie-notice-actions {
+  flex-shrink: 0;
+}
+
+.cookie-notice-actions button {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.cookie-notice.hidden {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .cookie-notice {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .cookie-notice-content {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cookie-notice-actions button {
+    width: 100%;
+  }
+}
