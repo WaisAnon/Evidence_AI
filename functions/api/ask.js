@@ -17,10 +17,13 @@ export async function onRequestPost(context) {
       );
     }
 
-    if (!context.env.GEMINI_API_KEY) {
+    if (
+      !context.env.GROQ_API_KEY &&
+      !context.env.GEMINI_API_KEY
+    ) {
       return reply(
         {
-          error: "The AI key has not been configured."
+          error: "No AI provider has been configured."
         },
         500
       );
@@ -31,21 +34,22 @@ You are Evidence AI, an evidence-based public-source research assistant.
 
 Answer concisely in no more than 400 words.
 
-Clearly separate:
+Clearly distinguish:
 - Confirmed facts
 - Official allegations
 - Credible reporting
 - Disputed or unverified claims
 
-Never present an unverified conspiracy claim as fact.
+Never present an unverified conspiracy claim as established fact.
 Never treat a criminal charge as a conviction.
 Do not provide stolen personal data, passwords, credentials,
 malware, or instructions for unauthorized access.
 
-If live sources have not been provided, clearly state that this is a
-preliminary background assessment and may not include recent developments.
+If live source material has not been supplied, clearly state that
+the response is a preliminary background assessment and may not
+include recent developments.
 
-Use these headings:
+Use exactly these headings:
 
 Assessment
 Confirmed facts
@@ -58,98 +62,66 @@ Question:
 ${question}
 `;
 
-    const endpoint =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+    /*
+      PRIMARY PROVIDER: GROQ
+    */
 
-    const controller = new AbortController();
+    if (context.env.GROQ_API_KEY) {
+      const groqResult = await askGroq(
+        prompt,
+        context.env.GROQ_API_KEY
+      );
 
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 60000);
-
-    let response;
-
-    try {
-      response = await fetch(endpoint, {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": context.env.GEMINI_API_KEY
-        },
-
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-
-          generationConfig: {
-            thinkingConfig: {
-              thinkingLevel: "low"
-            }
-          }
-        }),
-
-        signal: controller.signal
-      });
-    } catch (error) {
-      if (error.name === "AbortError") {
-        return reply(
-          {
-            error:
-              "Gemini did not respond within 60 seconds. Please try again."
-          },
-          504
-        );
+      if (groqResult.success) {
+        return reply({
+          answer: groqResult.answer,
+          provider: "GroqCloud"
+        });
       }
 
-      throw error;
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      const safeError =
-        result.error?.message || "Unknown Gemini API error.";
-
-      return reply(
-        {
-          error: `Gemini error ${response.status}: ${safeError}`
-        },
-        502
+      console.log(
+        `Groq failed: ${groqResult.status} ${groqResult.error}`
       );
     }
 
-    const answer =
-      result.candidates?.[0]?.content?.parts
-        ?.filter((part) => !part.thought && part.text)
-        .map((part) => part.text)
-        .join("\n")
-        .trim();
+    /*
+      BACKUP PROVIDER: GEMINI
+    */
 
-    if (!answer) {
-      const finishReason =
-        result.candidates?.[0]?.finishReason || "unknown";
+    if (context.env.GEMINI_API_KEY) {
+      const geminiResult = await askGemini(
+        prompt,
+        context.env.GEMINI_API_KEY
+      );
+
+      if (geminiResult.success) {
+        return reply({
+          answer: geminiResult.answer,
+          provider: "Google Gemini"
+        });
+      }
+
+      console.log(
+        `Gemini failed: ${geminiResult.status} ${geminiResult.error}`
+      );
 
       return reply(
         {
           error:
-            `Gemini returned no readable answer. Finish reason: ${finishReason}.`
+            `Both AI providers are temporarily unavailable. ` +
+            `Gemini returned ${geminiResult.status}. Please try again shortly.`
         },
-        502
+        503
       );
     }
 
-    return reply({ answer });
+    return reply(
+      {
+        error:
+          "The primary AI provider is temporarily unavailable."
+      },
+      503
+    );
   } catch (error) {
     console.error(error);
 
@@ -159,6 +131,189 @@ ${question}
       },
       500
     );
+  }
+}
+
+async function askGroq(prompt, apiKey) {
+  const endpoint =
+    "https://api.groq.com/openai/v1/chat/completions";
+
+  const result = await timedFetch(
+    endpoint,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Follow the evidence-assessment instructions carefully."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.2,
+        max_completion_tokens: 800
+      })
+    },
+    20000
+  );
+
+  if (!result.response) {
+    return {
+      success: false,
+      status: result.timedOut ? 504 : 500,
+      error: result.error || "Groq request failed."
+    };
+  }
+
+  const data = await safeJson(result.response);
+
+  if (!result.response.ok) {
+    return {
+      success: false,
+      status: result.response.status,
+      error:
+        data.error?.message || "Unknown Groq API error."
+    };
+  }
+
+  const answer =
+    data.choices?.[0]?.message?.content?.trim();
+
+  if (!answer) {
+    return {
+      success: false,
+      status: 502,
+      error: "Groq returned no readable answer."
+    };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    answer
+  };
+}
+
+async function askGemini(prompt, apiKey) {
+  const endpoint =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+
+  const result = await timedFetch(
+    endpoint,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          maxOutputTokens: 800,
+          thinkingConfig: {
+            thinkingLevel: "low"
+          }
+        }
+      })
+    },
+    45000
+  );
+
+  if (!result.response) {
+    return {
+      success: false,
+      status: result.timedOut ? 504 : 500,
+      error: result.error || "Gemini request failed."
+    };
+  }
+
+  const data = await safeJson(result.response);
+
+  if (!result.response.ok) {
+    return {
+      success: false,
+      status: result.response.status,
+      error:
+        data.error?.message || "Unknown Gemini API error."
+    };
+  }
+
+  const answer =
+    data.candidates?.[0]?.content?.parts
+      ?.filter((part) => !part.thought && part.text)
+      .map((part) => part.text)
+      .join("\n")
+      .trim();
+
+  if (!answer) {
+    return {
+      success: false,
+      status: 502,
+      error: "Gemini returned no readable answer."
+    };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    answer
+  };
+}
+
+async function timedFetch(url, options, milliseconds) {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, milliseconds);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+
+    return {
+      response,
+      timedOut: false
+    };
+  } catch (error) {
+    return {
+      response: null,
+      timedOut: error.name === "AbortError",
+      error:
+        error.name === "AbortError"
+          ? "The request timed out."
+          : error.message
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function safeJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
   }
 }
 
