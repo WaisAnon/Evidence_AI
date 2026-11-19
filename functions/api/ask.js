@@ -106,13 +106,15 @@ ${question}
       );
 
       return reply(
-        {
-          error:
-            `Both AI providers are temporarily unavailable. ` +
-            `Gemini returned ${geminiResult.status}. Please try again shortly.`
-        },
-        503
-      );
+        return reply(
+  {
+    error:
+      `Groq error ${groqFailure?.status || "unknown"}: ` +
+      `${groqFailure?.error || "Unknown Groq error"}. ` +
+      `Gemini returned ${geminiResult.status}.`
+  },
+  503
+);
     }
 
     return reply(
