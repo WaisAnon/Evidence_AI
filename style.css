@@ -93,3 +93,7 @@
     width: 100%;
   }
 }
+
+/* Latest DOJ Updates */
+.latest-section{margin-top:28px;padding:26px;border:1px solid #294257;border-radius:18px;background:rgba(10,24,36,.9);box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}.section-heading h2{margin:.15rem 0 .35rem}.section-intro{margin:0;color:#9eb2c2;line-height:1.55}.refresh-button{margin:0;border:1px solid #3b5f73;background:#0c2230;color:#8eeaff}.refresh-button:hover{background:#123247}.updates-status{color:#91a8b9;font-size:.9rem}.updates-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.update-card{padding:18px;border:1px solid #294257;border-radius:14px;background:#081722}.update-card:first-child{grid-column:1/-1}.update-meta{display:flex;justify-content:space-between;gap:12px;color:#7fdff4;font-size:.76rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.update-card h3{margin:12px 0 9px;font-size:1.05rem;line-height:1.4}.update-card h3 a{color:#edf7ff;text-decoration:none}.update-card h3 a:hover{text-decoration:underline;color:#78e7ff}.update-card p{margin:0;color:#9aaebd;line-height:1.55;font-size:.92rem}.feed-note{margin:18px 0 0;padding-top:14px;border-top:1px solid #294257;color:#7f94a4;font-size:.82rem;line-height:1.5}@media(max-width:700px){.updates-grid{grid-template-columns:1fr}.update-card:first-child{grid-column:auto}.refresh-button{width:100%}}
