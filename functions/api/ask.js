@@ -29,7 +29,7 @@ export async function onRequestPost(context) {
       );
     }
 
-    const prompt = `
+    let groqFailure = null;
 You are Evidence AI, an evidence-based public-source research assistant.
 
 Answer concisely in no more than 400 words.
