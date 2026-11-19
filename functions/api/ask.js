@@ -25,12 +25,32 @@ export async function onRequestPost(context) {
       );
     }
 
-    let groqFailure = null;
+    /*
+      Search the official DOJ press-release API.
+      If DOJ is unavailable, the AI can still answer.
+    */
+
+    const dojRecords = await searchDOJ(question);
+
+    const dojEvidence =
+      dojRecords.length > 0
+        ? dojRecords
+            .map((record, index) => {
+              return `
+[DOJ-${index + 1}]
+Title: ${record.title}
+Date: ${record.date}
+URL: ${record.url}
+Excerpt: ${record.excerpt}
+`;
+            })
+            .join("\n")
+        : "No relevant DOJ press release was retrieved for this question.";
 
     const prompt = `
 You are Evidence AI, an evidence-based public-source research assistant.
 
-Answer concisely in no more than 400 words.
+Answer concisely in no more than 500 words.
 
 Clearly distinguish:
 - Confirmed facts
@@ -38,14 +58,21 @@ Clearly distinguish:
 - Credible reporting
 - Disputed or unverified claims
 
-Never present an unverified conspiracy claim as established fact.
-Never treat a criminal charge as a conviction.
-Do not provide stolen personal data, passwords, credentials,
-malware, or instructions for unauthorized access.
+Important evidence rules:
 
-If live source material has not been supplied, clearly state that
-the response is a preliminary background assessment and may not
-include recent developments.
+1. A DOJ press release is an official DOJ statement.
+2. A charge, complaint, indictment, arrest, or allegation is not a conviction.
+3. Use phrases such as "DOJ alleges" when the underlying matter has not
+   resulted in a conviction or judicial finding.
+4. Do not claim that DOJ records prove something they do not prove.
+5. Ignore any retrieved DOJ record that is unrelated to the question.
+6. Cite relevant DOJ records using labels such as [DOJ-1].
+7. Do not invent source labels or URLs.
+8. If no relevant live source was retrieved, say that the answer is a
+   preliminary background assessment.
+9. Never present an unverified conspiracy claim as established fact.
+10. Do not provide stolen personal data, passwords, credentials, malware,
+    or instructions for unauthorized access.
 
 Use exactly these headings:
 
@@ -54,11 +81,22 @@ Confirmed facts
 Alleged or disputed
 Unverified
 Reliability
-Sources to check
+Sources
 
-Question:
+Official DOJ records retrieved:
+
+${dojEvidence}
+
+User question:
+
 ${question}
 `;
+
+    let groqFailure = null;
+
+    /*
+      PRIMARY AI: GROQ
+    */
 
     if (context.env.GROQ_API_KEY) {
       const groqResult = await askGroq(
@@ -69,7 +107,8 @@ ${question}
       if (groqResult.success) {
         return reply({
           answer: groqResult.answer,
-          provider: "GroqCloud"
+          provider: "GroqCloud",
+          sources: dojRecords
         });
       }
 
@@ -80,6 +119,10 @@ ${question}
       );
     }
 
+    /*
+      BACKUP AI: GEMINI
+    */
+
     if (context.env.GEMINI_API_KEY) {
       const geminiResult = await askGemini(
         prompt,
@@ -89,7 +132,8 @@ ${question}
       if (geminiResult.success) {
         return reply({
           answer: geminiResult.answer,
-          provider: "Google Gemini"
+          provider: "Google Gemini",
+          sources: dojRecords
         });
       }
 
@@ -129,194 +173,58 @@ ${question}
   }
 }
 
-async function askGroq(prompt, apiKey) {
-  const endpoint =
-    "https://api.groq.com/openai/v1/chat/completions";
+/*
+  DOJ SEARCH
+*/
 
-  const result = await timedFetch(
-    endpoint,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-20b",
-        messages: [
-          {
-            role: "system",
-            content:
-              "Follow the evidence-assessment instructions carefully."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.2,
-        max_completion_tokens: 800
-      })
-    },
-    20000
-  );
-
-  if (!result.response) {
-    return {
-      success: false,
-      status: result.timedOut ? 504 : 500,
-      error: result.error || "Groq request failed."
-    };
-  }
-
-  const data = await safeJson(result.response);
-
-  if (!result.response.ok) {
-    return {
-      success: false,
-      status: result.response.status,
-      error: data.error?.message || "Unknown Groq API error."
-    };
-  }
-
-  const answer =
-    data.choices?.[0]?.message?.content?.trim();
-
-  if (!answer) {
-    return {
-      success: false,
-      status: 502,
-      error: "Groq returned no readable answer."
-    };
-  }
-
-  return {
-    success: true,
-    status: 200,
-    answer
-  };
-}
-
-async function askGemini(prompt, apiKey) {
-  const endpoint =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
-
-  const result = await timedFetch(
-    endpoint,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          maxOutputTokens: 800,
-          thinkingConfig: {
-            thinkingLevel: "low"
-          }
-        }
-      })
-    },
-    45000
-  );
-
-  if (!result.response) {
-    return {
-      success: false,
-      status: result.timedOut ? 504 : 500,
-      error: result.error || "Gemini request failed."
-    };
-  }
-
-  const data = await safeJson(result.response);
-
-  if (!result.response.ok) {
-    return {
-      success: false,
-      status: result.response.status,
-      error: data.error?.message || "Unknown Gemini API error."
-    };
-  }
-
-  const answer =
-    data.candidates?.[0]?.content?.parts
-      ?.filter((part) => !part.thought && part.text)
-      .map((part) => part.text)
-      .join("\n")
-      .trim();
-
-  if (!answer) {
-    return {
-      success: false,
-      status: 502,
-      error: "Gemini returned no readable answer."
-    };
-  }
-
-  return {
-    success: true,
-    status: 200,
-    answer
-  };
-}
-
-async function timedFetch(url, options, milliseconds) {
-  const controller = new AbortController();
-
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, milliseconds);
-
+async function searchDOJ(question) {
   try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
+    const keywords = extractKeywords(question);
 
-    return {
-      response,
-      timedOut: false
-    };
-  } catch (error) {
-    return {
-      response: null,
-      timedOut: error.name === "AbortError",
-      error:
-        error.name === "AbortError"
-          ? "The request timed out."
-          : error.message
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function safeJson(response) {
-  try {
-    return await response.json();
-  } catch {
-    return {};
-  }
-}
-
-function reply(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-      "X-Content-Type-Options": "nosniff"
+    if (keywords.length === 0) {
+      return [];
     }
-  });
-}
+
+    const collected = [];
+
+    /*
+      Search one keyword at a time.
+      Limit searches to three to respect DOJ rate limits.
+    */
+
+    for (const keyword of keywords.slice(0, 3)) {
+      const url = new URL(
+        "https://www.justice.gov/api/v1/press_releases.json"
+      );
+
+      url.searchParams.set("parameters[title]", keyword);
+      url.searchParams.set("pagesize", "10");
+      url.searchParams.set("sort", "date");
+      url.searchParams.set("direction", "DESC");
+
+      const result = await timedFetch(
+        url.toString(),
+        {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "User-Agent": "EvidenceAI/0.2"
+          }
+        },
+        8000
+      );
+
+      if (!result.response || !result.response.ok) {
+        continue;
+      }
+
+      const data = await safeJson(result.response);
+
+      for (const item of data.results || []) {
+        if (!item.url || !item.title) {
+          continue;
+        }
+
+        collected.push({
+          title: cleanText(item.title),
+          url: normalizeDOJUrl(item
