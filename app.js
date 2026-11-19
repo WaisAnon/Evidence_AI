@@ -244,3 +244,50 @@ function isSafeDOJUrl(value) {
     return false;
   }
 }
+/*
+  Cookie notice
+*/
+
+const cookieNotice =
+  document.getElementById("cookieNotice");
+
+const acceptCookies =
+  document.getElementById("acceptCookies");
+
+const cookieNoticeVersion =
+  "evidence-ai-cookie-notice-v1";
+
+if (cookieNotice && acceptCookies) {
+  let cookieNoticeAccepted = false;
+
+  try {
+    cookieNoticeAccepted =
+      localStorage.getItem(cookieNoticeVersion) ===
+      "accepted";
+  } catch {
+    cookieNoticeAccepted = false;
+  }
+
+  if (!cookieNoticeAccepted) {
+    cookieNotice.classList.remove("hidden");
+  }
+
+  acceptCookies.addEventListener(
+    "click",
+    () => {
+      try {
+        localStorage.setItem(
+          cookieNoticeVersion,
+          "accepted"
+        );
+      } catch {
+        /*
+          The notice can still be dismissed when
+          browser storage is unavailable.
+        */
+      }
+
+      cookieNotice.classList.add("hidden");
+    }
+  );
+}
