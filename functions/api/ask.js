@@ -20,7 +20,7 @@ Sources to check
 
 Question: ${question}`;
 
-    const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
     const response = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":context.env.GEMINI_API_KEY},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:.2,maxOutputTokens:1200}})});
     const result=await response.json();
 if(!response.ok) return reply({error:`Gemini error ${response.status}: ${result.error?.message || "Unknown API error"}`},502);    const answer=result.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("\n").trim();
