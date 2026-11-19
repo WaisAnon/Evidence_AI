@@ -3,34 +3,83 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Evidence-based research across official records and public reporting.">
+  <meta
+    name="description"
+    content="Evidence-based research across official records and public reporting."
+  >
   <title>Evidence AI</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <header class="hero">
     <div class="wrap">
       <p class="eyebrow">PUBLIC-SOURCE RESEARCH</p>
+
       <h1>Evidence AI</h1>
-      <p class="intro">Ask about disputed claims, cyber incidents, government operations, and public records. Answers separate confirmed facts, allegations, and speculation.</p>
+
+      <p class="intro">
+        Ask about disputed claims, cyber incidents, government operations,
+        and public records. Answers separate confirmed facts, allegations,
+        and speculation.
+      </p>
     </div>
   </header>
+
   <main class="wrap">
     <section class="panel" aria-labelledby="ask-title">
       <h2 id="ask-title">Investigate a claim</h2>
+
       <label for="question">Your question</label>
-      <textarea id="question" maxlength="1000" placeholder="Example: What do official records say about Operation Northwoods?"></textarea>
+
+      <textarea
+        id="question"
+        maxlength="1000"
+        placeholder="Example: What has the DOJ said about recent ransomware cases?"
+      ></textarea>
+
       <div class="actions">
-        <button id="askButton" type="button">Investigate</button>
-        <span id="message" role="status" aria-live="polite"></span>
+        <button id="askButton" type="button">
+          Investigate
+        </button>
+
+        <button id="dojButton" class="secondary-button" type="button">
+          Search DOJ Records
+        </button>
+      </div>
+
+      <p class="button-help">
+        Investigate provides a general AI assessment. Search DOJ Records
+        checks live U.S. Department of Justice press releases.
+      </p>
+
+      <span id="message" role="status" aria-live="polite"></span>
+    </section>
+
+    <section
+      id="answerCard"
+      class="panel answer hidden"
+      aria-labelledby="answer-title"
+    >
+      <div class="answer-heading">
+        <h2 id="answer-title">Evidence assessment</h2>
+        <span id="sourceBadge" class="source-badge"></span>
+      </div>
+
+      <div id="answer"></div>
+
+      <div id="sourcesSection" class="sources-section hidden">
+        <h3>Official sources</h3>
+        <div id="sourcesList"></div>
       </div>
     </section>
-    <section id="answerCard" class="panel answer hidden" aria-labelledby="answer-title">
-      <h2 id="answer-title">Evidence assessment</h2>
-      <div id="answer"></div>
-    </section>
   </main>
-  <footer class="wrap">Use original sources before drawing conclusions. Social posts are leads, not proof.</footer>
+
+  <footer class="wrap">
+    Use original sources before drawing conclusions. Charges and allegations
+    must not be treated as convictions or established facts.
+  </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
