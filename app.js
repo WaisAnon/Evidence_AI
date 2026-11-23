@@ -13,8 +13,41 @@ function renderReport(data) {
       ? `AI: ${data.provider}`
       : "Evidence assessment";
 
-  $("verdict").textContent =
-    data.verdict || "Mixed or uncertain";
+const verdictText =
+  data.verdict || "Mixed or uncertain";
+
+$("verdict").textContent = verdictText;
+
+const verdictLower =
+  verdictText.toLowerCase();
+
+let verdictIcon = "❔";
+
+if (
+  verdictLower.includes("insufficient") ||
+  verdictLower.includes("inconclusive") ||
+  verdictLower.includes("mixed") ||
+  verdictLower.includes("uncertain")
+) {
+  verdictIcon = "⚠️";
+} else if (
+  verdictLower.includes("mostly supported")
+) {
+  verdictIcon = "✅";
+} else if (
+  verdictLower.includes("unsupported") ||
+  verdictLower.includes("false") ||
+  verdictLower.includes("contradicted")
+) {
+  verdictIcon = "❌";
+} else if (
+  verdictLower.includes("supported")
+) {
+  verdictIcon = "✅";
+}
+
+$("verdict").textContent =
+  `${verdictIcon} ${verdictText}`;
 
   $("summary").textContent =
     data.summary || "No summary was returned.";
