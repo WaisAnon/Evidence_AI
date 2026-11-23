@@ -2,6 +2,138 @@ const $=id=>document.getElementById(id);const state={mode:'investigate',last:nul
 const configs={investigate:{eyebrow:'INVESTIGATE',title:'What do you want to examine?',description:'Ask a factual question or enter a claim. Evidence AI will separate support, challenge, uncertainty, and limitations.',placeholder:'Example: Does creatine cause hair loss?',button:'Investigate',examples:['Does caffeine dehydrate you?','Did Vikings wear horned helmets?','Are seed oils harmful?']},compare:{eyebrow:'COMPARE',title:'What do you want to compare?',description:'Compare people, choices, or ideas using explicit criteria. Subjective weightings should remain visible.',placeholder:'Example: Messi vs Ronaldo: who had the stronger career?',button:'Compare',examples:['Messi vs Ronaldo','Kohli vs Tendulkar','Cricket vs baseball: which is harder for a batter?']},debate:{eyebrow:'DEBATE',title:'Which debate should we examine?',description:'Review the strongest evidence on competing sides, areas of agreement, and what remains unresolved.',placeholder:'Example: Will AI eliminate more jobs than it creates?',button:'Examine debate',examples:['Will AI eliminate more jobs than it creates?','Are seed oils harmful?','Should nuclear power be expanded?']}};
 function setMode(mode){state.mode=mode;const c=configs[mode];document.querySelectorAll('.mode-tab').forEach(b=>{const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-selected',String(on))});$('modeEyebrow').textContent=c.eyebrow;$('ask-title').textContent=c.title;$('modeDescription').textContent=c.description;$('question').placeholder=c.placeholder;$('askButton').textContent=c.button;$('examples').replaceChildren(...c.examples.map(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{$('question').value=t;$('question').focus()});return b}))}
 function addList(id,items,fallback){const ul=$(id);ul.replaceChildren();(items?.length?items:[fallback]).forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li)})}
-function renderReport(data){state.last=data;$('report-title').textContent=data.question||'Evidence assessment';$('sourceBadge').textContent=data.provider?`AI: ${data.provider}`:'Evidence assessment';$('verdict').textContent=data.verdict||'Mixed or uncertain';$('summary').textContent=data.summary||'No summary was returned.';addList('supports',data.supports,'No specific supporting evidence was identified.');addList('challenges',data.challenges,'No specific challenging evidence was identified.');addList('uncertainties',data.uncertainties,'Important uncertainty remains.');addList('limitations',data.limitations,'This is an AI-generated research starting point.');const list=$('sourcesList');list.replaceChildren();(data.sources||[]).forEach(s=>{const row=document.createElement('div');row.className='source-item';if(s.url){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=s.title||s.url;row.append(a)}else{const strong=document.createElement('strong');strong.textContent=s.title||'Source';row.append(strong)}if(s.note){const small=document.createElement('small');small.textContent=s.note;row.append(small)}list.append(row)});$('sourceNotice').textContent=data.sourceNotice||'No live source retrieval was used for this response. Verify important claims using primary and authoritative sources.';$('answerCard').classList.remove('hidden');$('answerCard').scrollIntoView({behavior:'smooth',block:'start'})}
-async function ask(){const q=$('question').value.trim();if(q.length<5){$('message').textContent='Enter at least 5 characters.';return}const btn=$('askButton');btn.disabled=true;$('message').textContent='Examining the question…';$('answerCard').classList.add('hidden');try{const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,mode:state.mode})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'The investigation could not be completed.');renderReport(data);$('message').textContent=''}catch(e){$('message').textContent=e.message||'Something went wrong. Please try again.'}finally{btn.disabled=false}}
+function renderReport(data) {
+  state.last = data;
+
+  $("report-title").textContent =
+    data.question || "Evidence assessment";
+
+  $("sourceBadge").textContent =
+    data.provider
+      ? `AI: ${data.provider}`
+      : "Evidence assessment";
+
+  $("verdict").textContent =
+    data.verdict || "Mixed or uncertain";
+
+  $("summary").textContent =
+    data.summary || "No summary was returned.";
+
+  // Automatically colour-code the verdict
+  const verdictCard =
+    document.querySelector(".verdict-card");
+
+  verdictCard.classList.remove(
+    "verdict-supported",
+    "verdict-mostly-supported",
+    "verdict-inconclusive",
+    "verdict-unsupported",
+    "verdict-insufficient"
+  );
+
+  const verdict =
+    String(data.verdict || "").toLowerCase();
+
+  if (
+    verdict.includes("insufficient") ||
+    verdict.includes("inconclusive") ||
+    verdict.includes("mixed") ||
+    verdict.includes("uncertain")
+  ) {
+    verdictCard.classList.add(
+      "verdict-inconclusive"
+    );
+  } else if (
+    verdict.includes("mostly supported")
+  ) {
+    verdictCard.classList.add(
+      "verdict-mostly-supported"
+    );
+  } else if (
+    verdict.includes("unsupported") ||
+    verdict.includes("false") ||
+    verdict.includes("contradicted")
+  ) {
+    verdictCard.classList.add(
+      "verdict-unsupported"
+    );
+  } else if (
+    verdict.includes("supported")
+  ) {
+    verdictCard.classList.add(
+      "verdict-supported"
+    );
+  } else {
+    verdictCard.classList.add(
+      "verdict-insufficient"
+    );
+  }
+
+  addList(
+    "supports",
+    data.supports,
+    "No specific supporting evidence was identified."
+  );
+
+  addList(
+    "challenges",
+    data.challenges,
+    "No specific challenging evidence was identified."
+  );
+
+  addList(
+    "uncertainties",
+    data.uncertainties,
+    "Important uncertainty remains."
+  );
+
+  addList(
+    "limitations",
+    data.limitations,
+    "This is an AI-generated research starting point."
+  );
+
+  const list = $("sourcesList");
+  list.replaceChildren();
+
+  (data.sources || []).forEach((s) => {
+    const row = document.createElement("div");
+    row.className = "source-item";
+
+    if (s.url) {
+      const a = document.createElement("a");
+      a.href = s.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = s.title || s.url;
+      row.append(a);
+    } else {
+      const strong =
+        document.createElement("strong");
+      strong.textContent =
+        s.title || "Source";
+      row.append(strong);
+    }
+
+    if (s.note) {
+      const small =
+        document.createElement("small");
+      small.textContent = s.note;
+      row.append(small);
+    }
+
+    list.append(row);
+  });
+
+  $("sourceNotice").textContent =
+    data.sourceNotice ||
+    "No live source retrieval was used for this response. Verify important claims using primary and authoritative sources.";
+
+  $("answerCard").classList.remove("hidden");
+
+  $("answerCard").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}async function ask(){const q=$('question').value.trim();if(q.length<5){$('message').textContent='Enter at least 5 characters.';return}const btn=$('askButton');btn.disabled=true;$('message').textContent='Examining the question…';$('answerCard').classList.add('hidden');try{const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,mode:state.mode})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'The investigation could not be completed.');renderReport(data);$('message').textContent=''}catch(e){$('message').textContent=e.message||'Something went wrong. Please try again.'}finally{btn.disabled=false}}
 document.querySelectorAll('.mode-tab').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));document.querySelectorAll('.topic').forEach(b=>b.addEventListener('click',()=>{setMode(b.dataset.mode);$('question').value=b.dataset.question;document.querySelector('.workspace').scrollIntoView({behavior:'smooth'})}));$('askButton').addEventListener('click',ask);$('clearButton').addEventListener('click',()=>{$('question').value='';$('message').textContent='';$('answerCard').classList.add('hidden');$('question').focus()});$('question').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')ask()});$('copyButton').addEventListener('click',async()=>{if(!state.last)return;const d=state.last;const text=`${d.question}\nVerdict: ${d.verdict}\n${d.summary}\n\nGenerated by Evidence AI. Verify important claims.`;await navigator.clipboard.writeText(text);$('message').textContent='Summary copied.'});$('shareButton').addEventListener('click',async()=>{const d=state.last;if(!d)return;const payload={title:'Evidence AI',text:`${d.question} — ${d.verdict}: ${d.summary}`,url:location.href};if(navigator.share)await navigator.share(payload);else{await navigator.clipboard.writeText(location.href);$('message').textContent='Link copied.'}});const accepted=localStorage.getItem('evidenceai-notice');if(!accepted)$('cookieNotice').classList.remove('hidden');$('acceptCookies').addEventListener('click',()=>{localStorage.setItem('evidenceai-notice','accepted');$('cookieNotice').classList.add('hidden')});setMode('investigate');
